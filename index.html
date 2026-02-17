@@ -903,6 +903,36 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
   window.addEventListener('unload',function(){SCORM.finish()});
 })();
 </script>
+<!-- Cookie Consent Banner -->
+<div id="cookieBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a2535;border-top:1px solid #2a3a50;padding:16px 24px;z-index:9999;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:200px;">
+    <p style="font-size:13px;color:#b0c4d8;margin:0;line-height:1.6;">
+      🍪 We use cookies to count visitors anonymously via Google Analytics. No personal data is collected. 
+      <a href="/privacy-policy.html" style="color:#3b82f6;text-decoration:underline;">Learn more</a>
+    </p>
+  </div>
+  <div style="display:flex;gap:10px;flex-shrink:0;">
+    <button onclick="acceptEssential()" style="background:transparent;border:1px solid #4a6278;color:#b0c4d8;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;">Essential Only</button>
+    <button onclick="acceptAll()" style="background:linear-gradient(135deg,#3b82f6,#6366f1);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-weight:600;">Accept All</button>
+  </div>
+</div>
 
+<script>
+  (function(){
+    if(!localStorage.getItem('cookieConsent')){
+      document.getElementById('cookieBanner').style.display='flex';
+    }
+  })();
+  function acceptAll(){
+    localStorage.setItem('cookieConsent','all');
+    document.getElementById('cookieBanner').style.display='none';
+  }
+  function acceptEssential(){
+    localStorage.setItem('cookieConsent','essential');
+    document.getElementById('cookieBanner').style.display='none';
+    // Disable Google Analytics
+    window['ga-disable-G-VGFEP0DJ9G']=true;
+  }
+</script>
 </body>
 </html>
