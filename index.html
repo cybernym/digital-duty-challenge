@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Digital Duty Challenge – Think Before You Click</title>
+<script src="scorm_api.js"></script>
+<style>
+/*═══════════════════════════════════════════
+  RESET & VARIABLES
+═══════════════════════════════════════════*/
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#0A2E5C;--pri-l:#1B4F8A;--pri-d:#061B38;
+  --acc:#00D4AA;--acc-h:#00B894;--acc-glow:rgba(0,212,170,.25);
+  --danger:#E74C3C;--danger-bg:#FDEDEC;
+  --warn:#F39C12;--warn-bg:#FEF5E7;
+  --ok:#27AE60;--ok-bg:#EAFAF1;
+  --bg:#F0F3F7;--card:#FFFFFF;
+  --txt:#2C3E50;--txt2:#6C7A89;--txt3:#95A5A6;
+  --bdr:#E0E4EA;
+  --sh:0 2px 8px rgba(0,0,0,.06);
+  --sh-lg:0 8px 28px rgba(0,0,0,.10);
+  --r:14px;--rs:10px;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html,body{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);overflow:hidden;-webkit-tap-highlight-color:transparent}
+
+/*═══════════════════════════════════════════
+  LAYOUT SHELL
+═══════════════════════════════════════════*/
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1100px;margin:0 auto}
+
+/*─── HEADER ───*/
+.hdr{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bdr);flex-shrink:0;z-index:50}
+.hdr-logo{display:flex;align-items:center;gap:8px;min-width:0}
+.hdr-logo img{height:32px;width:auto;flex-shrink:0}
+.hdr-brand{font-size:13px;font-weight:700;color:var(--pri);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-brand small{display:block;font-size:10px;font-weight:400;color:var(--txt2)}
+.hdr-prog{flex:1;min-width:60px}
+.hdr-prog-label{font-size:10px;color:var(--txt3);text-align:right;margin-bottom:2px}
+.prog-track{height:5px;background:var(--bdr);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),#00E5BB);border-radius:3px;transition:width .5s var(--ease);width:0}
+.hdr-score{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--pri);background:var(--bg);padding:5px 12px;border-radius:20px;white-space:nowrap}
+.hdr-score svg{width:14px;height:14px;color:var(--acc)}
+
+/*─── MAIN SCROLLABLE AREA ───*/
+.main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px}
+
+/*─── SLIDES ───*/
+.sl{display:none;width:100%;animation:fadeUp .35s var(--ease)}
+.sl.on{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/*─── FOOTER NAV ───*/
+.foot{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--card);border-top:1px solid var(--bdr);flex-shrink:0;gap:8px}
+.nbtn{display:inline-flex;align-items:center;gap:5px;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s var(--ease);-webkit-appearance:none}
+.nbtn:disabled{opacity:.3;cursor:not-allowed;transform:none!important}
+.nbtn:active:not(:disabled){transform:scale(.97)}
+.nb-back{background:var(--bg);color:var(--txt);border:1px solid var(--bdr)}
+.nb-next{background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff}
+.nb-next:hover:not(:disabled){box-shadow:0 4px 12px rgba(10,46,92,.25)}
+.foot-count{font-size:11px;color:var(--txt3);font-weight:500}
+
+/*═══════════════════════════════════════════
+  INTRO SLIDE
+═══════════════════════════════════════════*/
+.intro{text-align:center;padding:20px 8px}
+.intro-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px}
+.intro h1{font-size:clamp(28px,6vw,44px);font-weight:800;color:var(--pri);line-height:1.1;margin-bottom:6px}
+.intro h1 em{font-style:normal;color:var(--acc)}
+.intro .sub{font-size:14px;color:var(--txt2);margin-bottom:20px;line-height:1.5}
+.intro-hero{width:100%;max-width:420px;margin:0 auto 20px;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-lg)}
+.intro-hero img{width:100%;height:auto;display:block}
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;max-width:600px;margin:0 auto 24px}
+.lchip{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--rs);padding:8px 10px;font-size:11px;font-weight:500;color:var(--txt)}
+.lchip-ico{width:26px;height:26px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.btn-start{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--acc),#00E5BB);color:var(--pri-d);border:none;padding:14px 36px;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px var(--acc-glow);transition:all .25s var(--ease)}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 6px 24px var(--acc-glow)}
+.btn-start:active{transform:scale(.97)}
+
+/*═══════════════════════════════════════════
+  SCENARIO SLIDES
+═══════════════════════════════════════════*/
+.sc-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.sc-head{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff}
+.lv-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.lv-badge svg{width:13px;height:13px}
+.sc-title{font-size:17px;font-weight:700}
+.sc-body{padding:18px}
+
+.sc-desc{font-size:14px;line-height:1.65;color:var(--txt);background:var(--bg);padding:14px 16px;border-radius:var(--rs);border-left:4px solid var(--acc);margin-bottom:16px}
+
+/* ─── SCENARIO IMAGE / PLACEHOLDER ─── */
+.sc-img-wrap{margin-bottom:18px;border-radius:var(--rs);overflow:hidden;background:#EEF1F5;border:2px dashed var(--bdr);position:relative;min-height:180px;display:flex;align-items:center;justify-content:center}
+.sc-img-wrap.has-img{border:none;background:none;min-height:0}
+.sc-img-wrap img{width:100%;height:auto;display:block;border-radius:var(--rs)}
+.sc-img-wrap .placeholder{text-align:center;padding:32px 16px;color:var(--txt3)}
+.sc-img-wrap .placeholder svg{width:48px;height:48px;margin-bottom:8px;opacity:.4}
+.sc-img-wrap .placeholder p{font-size:12px;font-weight:500}
+.sc-img-wrap .placeholder small{font-size:11px;display:block;margin-top:4px;color:var(--txt3)}
+
+/* ─── RED FLAGS (click-to-reveal) ─── */
+.flags{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.flag{background:var(--card);border:1px solid var(--bdr);border-radius:var(--rs);padding:14px;cursor:pointer;transition:all .25s var(--ease);position:relative;overflow:hidden;min-height:110px}
+.flag::after{content:'Tap to reveal';position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--txt3);font-weight:500;transition:all .3s var(--ease);pointer-events:none;z-index:2}
+.flag.show::after{opacity:0}
+.flag:not(.show):hover::after{background:#E3E8EF}
+.flag:not(.show):active::after{background:#D5DBE4}
+.flag-ico{font-size:20px;margin-bottom:6px}
+.flag-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.flag-type.risk,.flag-type.danger,.flag-type.lure,.flag-type.impact,.flag-type.harm,.flag-type.location,.flag-type.restriction,.flag-type.demand{color:var(--danger)}
+.flag-type.warning,.flag-type.identifier,.flag-type.content,.flag-type.trick,.flag-type.trap{color:var(--warn)}
+.flag-type.pressure,.flag-type.visibility,.flag-type.theme,.flag-type.unknown{color:#8E44AD}
+.flag-txt{font-size:12px;line-height:1.45;color:var(--txt)}
+
+/*═══════════════════════════════════════════
+  CHOICE SLIDES
+═══════════════════════════════════════════*/
+.ch-body{padding:24px 18px;text-align:center}
+.ch-body h2{font-size:20px;font-weight:700;color:var(--pri);margin-bottom:4px}
+.ch-sub{font-size:13px;color:var(--txt2);margin-bottom:20px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px;margin:0 auto 18px}
+.cbtn{padding:18px 14px;border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;transition:all .2s var(--ease);border:2px solid var(--bdr);background:var(--card);color:var(--txt);text-align:center;-webkit-appearance:none}
+.cbtn small{display:block;font-size:11px;font-weight:400;color:var(--txt2);margin-top:3px}
+.cbtn:hover{border-color:var(--pri-l);transform:translateY(-2px);box-shadow:var(--sh)}
+.cbtn:active{transform:scale(.97)}
+.cbtn.wrong{border-color:var(--danger);background:var(--danger-bg);color:var(--danger)}
+.cbtn.right{border-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+.cbtn.off{pointer-events:none;opacity:.55}
+.fb{display:none;padding:14px 16px;border-radius:var(--rs);font-size:13px;line-height:1.55;max-width:520px;margin:0 auto 12px;text-align:left}
+.fb.on{display:block}
+.fb.fb-ok{background:var(--ok-bg);border:1px solid #A9DFBF;color:#1E8449}
+.fb.fb-no{background:var(--danger-bg);border:1px solid #F5B7B1;color:#C0392B}
+.ch-tip{font-size:12px;color:var(--txt3);margin-top:8px}
+
+/*═══════════════════════════════════════════
+  PARENT GUIDANCE SLIDES
+═══════════════════════════════════════════*/
+.par-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.par-panel{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+.par-head{padding:14px 16px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
+.par-head svg{width:18px;height:18px;flex-shrink:0}
+.par-head.ph-parent{background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff}
+.par-head.ph-kid{background:linear-gradient(135deg,var(--acc),#00E5BB);color:var(--pri-d)}
+.g-list{padding:12px 16px;flex:1}
+.g-item{padding:10px 0;border-bottom:1px solid var(--bdr);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.g-item:last-child{border-bottom:none}
+.g-item-title{font-size:13px;font-weight:600;color:var(--pri);display:flex;align-items:center;gap:6px}
+.g-item-title .arr{margin-left:auto;transition:transform .25s var(--ease);font-size:16px;color:var(--txt3)}
+.g-item.open .arr{transform:rotate(180deg)}
+.g-item-det{max-height:0;overflow:hidden;transition:max-height .3s var(--ease);font-size:12px;line-height:1.55;color:var(--txt2)}
+.g-item.open .g-item-det{max-height:160px;padding-top:6px}
+.law{margin:12px 16px 16px;padding:12px 14px;background:#FFF8E1;border-radius:var(--rs);border-left:4px solid var(--warn)}
+.law-t{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--warn);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.law-p{font-size:11px;line-height:1.55;color:#7D6608}
+
+/*═══════════════════════════════════════════
+  COMPLETION SLIDE
+═══════════════════════════════════════════*/
+.comp{text-align:center;padding:20px 8px}
+.comp .trophy{font-size:56px;margin-bottom:10px;animation:bounce 1.2s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.comp h1{font-size:clamp(26px,5vw,36px);font-weight:800;color:var(--pri);margin-bottom:4px}
+.comp .csub{font-size:14px;color:var(--acc);font-weight:600;margin-bottom:20px}
+.score-box{display:inline-flex;align-items:center;gap:14px;background:var(--card);border-radius:var(--r);padding:16px 28px;box-shadow:var(--sh);margin-bottom:20px}
+.sc-num{font-size:42px;font-weight:800;color:var(--pri)}
+.sc-num span{font-size:18px;color:var(--txt3)}
+.sc-det{text-align:left}
+.sc-det-l{font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
+.sc-det-s{font-size:15px;font-weight:700;color:var(--ok)}
+.badges{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;max-width:560px;margin:0 auto 20px}
+.bdg{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bdg-ico{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .3s var(--ease)}
+.bdg-ico.won{background:linear-gradient(135deg,var(--acc),#00E5BB);color:var(--pri-d);box-shadow:0 3px 10px var(--acc-glow)}
+.bdg-ico.lost{background:var(--bdr);color:var(--txt3)}
+.bdg-lbl{font-size:9px;font-weight:600;color:var(--txt3);text-align:center;line-height:1.2}
+.ach-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px;margin:0 auto 20px}
+.ach{background:var(--card);border-radius:var(--r);padding:16px;box-shadow:var(--sh);text-align:left}
+.ach h3{font-size:13px;font-weight:700;color:var(--pri);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ach p{font-size:12px;line-height:1.55;color:var(--txt2)}
+
+/*═══════════════════════════════════════════
+  OUTRO SLIDE
+═══════════════════════════════════════════*/
+.outro{text-align:center;padding:32px 12px}
+.outro .quote{font-size:clamp(20px,4vw,26px);font-weight:700;color:var(--pri);line-height:1.35;margin-bottom:20px}
+.outro .quote em{font-style:normal;color:var(--acc)}
+.outro-logo{margin:16px auto}
+.outro-logo img{height:44px}
+.outro .msg{font-size:14px;color:var(--txt2);margin-bottom:24px;line-height:1.6}
+.outro .copy{margin-top:24px;font-size:11px;color:var(--txt3)}
+
+/*─── OUTRO MISSION BLOCK ───*/
+.outro-mission{background:var(--card);border-radius:var(--r);box-shadow:var(--sh-lg);padding:28px 24px;max-width:620px;margin:0 auto 24px;text-align:center;border:1px solid var(--bdr)}
+.mission-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--pri),var(--pri-l));color:#fff;padding:6px 18px;border-radius:50px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.mission-lead{font-size:15px;color:var(--txt);line-height:1.6;margin-bottom:14px}
+.mission-lead strong{color:var(--pri)}
+.mission-divider{width:60px;height:3px;background:linear-gradient(90deg,var(--acc),#00E5BB);border-radius:2px;margin:0 auto 14px}
+.mission-statement{font-size:17px;font-weight:700;color:var(--pri);line-height:1.45;margin-bottom:16px}
+.mission-statement em{font-style:normal;color:var(--danger);font-weight:800}
+.mission-points{display:flex;flex-direction:column;gap:8px;max-width:420px;margin:0 auto}
+.mp{display:flex;align-items:center;gap:10px;background:var(--bg);padding:10px 16px;border-radius:var(--rs);font-size:13px;color:var(--txt);text-align:left}
+.mp-ico{font-size:18px;flex-shrink:0}
+.mp-highlight{background:linear-gradient(135deg,rgba(0,212,170,.1),rgba(0,229,187,.08));border:1px solid rgba(0,212,170,.25)}
+.mp-highlight strong{color:var(--pri)}
+
+/*─── OUTRO CTA ───*/
+.outro-cta{margin-bottom:20px}
+.outro-cta-text{font-size:14px;font-weight:600;color:var(--pri);margin-bottom:12px}
+.outro-links{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.olink{display:inline-flex;align-items:center;gap:6px;padding:12px 28px;border-radius:50px;font-size:14px;font-weight:600;text-decoration:none;transition:all .25s var(--ease)}
+.olink.ol-p{background:linear-gradient(135deg,var(--acc),#00E5BB);color:var(--pri-d);box-shadow:0 4px 14px var(--acc-glow)}
+.olink.ol-p:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--acc-glow)}
+.olink.ol-s{background:var(--card);color:var(--pri);border:1.5px solid var(--bdr)}
+.olink.ol-s:hover{border-color:var(--pri-l);background:var(--bg)}
+
+/*─── OUTRO SHARE PROMPT ───*/
+.outro-share{background:linear-gradient(135deg,var(--pri),var(--pri-l));border-radius:var(--rs);padding:14px 20px;max-width:460px;margin:0 auto 16px}
+.share-text{font-size:13px;font-weight:600;color:#fff;margin:0}
+
+@media(max-width:768px){
+  .outro-mission{padding:20px 16px}
+  .mission-statement{font-size:15px}
+  .mp{padding:8px 12px;font-size:12px}
+  .olink{padding:10px 20px;font-size:13px}
+}
+
+/*═══════════════════════════════════════════
+  MOBILE RESPONSIVE (<768px)
+═══════════════════════════════════════════*/
+@media(max-width:768px){
+  .hdr{padding:8px 12px;gap:8px}
+  .hdr-logo img{height:26px}
+  .hdr-brand{font-size:11px}
+  .hdr-brand small{display:none}
+  .hdr-prog{min-width:40px}
+  .hdr-score{padding:4px 10px;font-size:11px}
+  .main{padding:12px}
+  .flags{grid-template-columns:1fr!important}
+  .choices{grid-template-columns:1fr!important}
+  .par-grid{grid-template-columns:1fr!important}
+  .badges{grid-template-columns:repeat(4,1fr)}
+  .ach-row{grid-template-columns:1fr}
+  .foot{padding:8px 12px}
+  .nbtn{padding:9px 16px;font-size:12px}
+  .intro h1{margin-bottom:4px}
+  .intro .sub{font-size:13px}
+  .levels-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px}
+  .sc-head{padding:12px 14px}
+  .sc-title{font-size:15px}
+  .sc-body{padding:14px}
+  .sc-desc{padding:12px 14px;font-size:13px}
+  .ch-body{padding:18px 14px}
+  .ch-body h2{font-size:18px}
+  .cbtn{padding:14px 10px;font-size:13px}
+  .par-head{padding:12px 14px;font-size:13px}
+  .g-list{padding:10px 14px}
+  .law{margin:10px 14px 14px;padding:10px 12px}
+}
+
+/*═══════════════════════════════════════════
+  SMALL MOBILE (<400px)
+═══════════════════════════════════════════*/
+@media(max-width:400px){
+  .hdr-brand{display:none}
+  .hdr-prog-label{display:none}
+  .intro-hero{max-width:280px}
+  .badges{grid-template-columns:repeat(4,1fr);gap:6px}
+  .bdg-ico{width:40px;height:40px;font-size:17px}
+  .bdg-lbl{font-size:8px}
+  .score-box{padding:12px 20px}
+  .sc-num{font-size:34px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ═══ HEADER ═══ -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <img src="images/cybernym-logo.jpg" alt="Cybernym">
+    <div class="hdr-brand">Digital Duty Challenge<small>Think Before You Click</small></div>
+  </div>
+  <div class="hdr-prog">
+    <div class="hdr-prog-label" id="pLbl">0%</div>
+    <div class="prog-track"><div class="prog-fill" id="pFill"></div></div>
+  </div>
+  <div class="hdr-score">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span id="scDisp">0/7</span>
+  </div>
+</header>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main" id="main">
+
+<!-- ════════════════════════════ SLIDE 0 : INTRO ════════════════════════════ -->
+<section class="sl on" data-s="0">
+<div class="intro">
+  <div class="intro-badge">🛡️ Digital Safety Course</div>
+  <h1>Think Before <em>You Click</em></h1>
+  <p class="sub">7 moments. One shared conversation.<br>Start as a parent, invite your child to take the Digital Duty Challenge.</p>
+  <div class="intro-hero has-img">
+    <!-- ★ HERO IMAGE — replace src to swap -->
+    <img src="images/hero-character.jpg" alt="Digital Safety Hero Character">
+  </div>
+  <div class="levels-grid">
+    <div class="lchip"><div class="lchip-ico">🏰</div>The Invite</div>
+    <div class="lchip"><div class="lchip-ico">🎮</div>Age Ratings</div>
+    <div class="lchip"><div class="lchip-ico">📸</div>Public Post</div>
+    <div class="lchip"><div class="lchip-ico">🎁</div>The Data</div>
+    <div class="lchip"><div class="lchip-ico">📷</div>The Request</div>
+    <div class="lchip"><div class="lchip-ico">🛡️</div>The Group</div>
+    <div class="lchip"><div class="lchip-ico">💰</div>Game Spending</div>
+  </div>
+  <button class="btn-start" onclick="go(1)">Begin Journey →</button>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 1 — THE INVITE ════════════════════════════ -->
+<!-- 1A: Scenario -->
+<section class="sl" data-s="1">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 1</div><div class="sc-title">The Invite</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">You receive a notification for a new server invite. It promises a "Secret Hangout" with no rules. Take a closer look at the details.</div>
+    <!-- ★ SCENARIO IMAGE — Level 1 Discord Screenshot -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level1-discord.jpg" alt="Discord server invite showing Secret Hangout with no mods">
+    </div>
+    <div class="flags" data-lv="1">
+      <div class="flag" onclick="rf(this,1)"><div class="flag-ico">🔴</div><div class="flag-type risk">RISK</div><div class="flag-txt">"Secret" often hides unsafe activity.</div></div>
+      <div class="flag" onclick="rf(this,1)"><div class="flag-ico">⚠️</div><div class="flag-type warning">WARNING</div><div class="flag-txt">No moderators means no safety rules.</div></div>
+      <div class="flag" onclick="rf(this,1)"><div class="flag-ico">⏰</div><div class="flag-type pressure">PRESSURE</div><div class="flag-txt">"Expires in 1 hour" creates false urgency.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- 1B: Choice -->
+<section class="sl" data-s="2">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 1</div><div class="sc-title">Make Your Move</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2>
+    <p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,2,0)">Join the Party!<small>⚡ Instant Access</small></button>
+      <button class="cbtn" onclick="pick(this,2,1)">Check with Parent<small>🛡️ Stay Safe</small></button>
+    </div>
+    <div class="fb" id="fb2"></div>
+    <p class="ch-tip">💡 "Secret" or "No Mods" usually means higher risk of unsafe content.</p>
+  </div>
+</div>
+</section>
+
+<!-- 1C: Parent Guidance -->
+<section class="sl" data-s="3">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Supervision is key<span class="arr">▾</span></div><div class="g-item-det">Ask who invited them, who moderates the server, and what the rules are.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Check settings together<span class="arr">▾</span></div><div class="g-item-det">Review device and platform privacy settings to limit who can contact your child.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Discuss "Secrets"<span class="arr">▾</span></div><div class="g-item-det">Explain that online spaces asking for secrecy often lack safety guards.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Many platforms set 13+ minimum age requirements. Sharing harmful content or contacting minors inappropriately can violate platform rules and local child-safety laws.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">"Secret" often means unsafe<span class="arr">▾</span></div><div class="g-item-det">Real friends don't need to hide where they hang out.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">No mods = No guards<span class="arr">▾</span></div><div class="g-item-det">If there's nobody to enforce rules, anything can happen.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Ask before you join<span class="arr">▾</span></div><div class="g-item-det">Show a parent the invite. If it's safe, they'll say yes.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 2 — AGE RATINGS ════════════════════════════ -->
+<section class="sl" data-s="4">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 2</div><div class="sc-title">Age Ratings</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">You found a cool new game called "Shadow Strike". It looks intense and exciting. But check the details before you install…</div>
+    <!-- ★ SCENARIO IMAGE — Level 2 Game Store -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level2-gamestore.jpg" alt="Shadow Strike game store listing showing 16+ rating">
+    </div>
+    <div class="flags" data-lv="2">
+      <div class="flag" onclick="rf(this,2)"><div class="flag-ico">🔞</div><div class="flag-type restriction">RESTRICTION</div><div class="flag-txt">"16+" means mature content.</div></div>
+      <div class="flag" onclick="rf(this,2)"><div class="flag-ico">⚔️</div><div class="flag-type content">CONTENT</div><div class="flag-txt">Intense violence &amp; online chat.</div></div>
+      <div class="flag" onclick="rf(this,2)"><div class="flag-ico">🎭</div><div class="flag-type theme">THEME</div><div class="flag-txt">Dark, realistic combat visuals.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="5">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 2</div><div class="sc-title">Make Your Choice</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,5,0)">Install Now<small>⚡ Play Instantly</small></button>
+      <button class="cbtn" onclick="pick(this,5,1)">Check Age Rating<small>🛡️ Smart Move</small></button>
+    </div>
+    <div class="fb" id="fb5"></div>
+    <p class="ch-tip">💡 Ratings summarize content risk quickly. 16+ often means mature themes.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="6">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Ratings summarize risks fast<span class="arr">▾</span></div><div class="g-item-det">They aren't just suggestions; they highlight violence, language, and interaction risks.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Model good choices<span class="arr">▾</span></div><div class="g-item-det">Show how you check ratings for movies or games you buy for yourself.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Set purchase limits<span class="arr">▾</span></div><div class="g-item-det">Configure devices to require approval for any app install or purchase.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Stores and ratings bodies (like IARC, PEGI, ESRB) provide guidance to protect minors. Some regions restrict access to mature content for users under specific ages.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Fair play is fun play<span class="arr">▾</span></div><div class="g-item-det">Games for your age group are designed for your skill level.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Don't rush growing up<span class="arr">▾</span></div><div class="g-item-det">16+ games often have toxic chats that aren't fun to be in.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Ask first<span class="arr">▾</span></div><div class="g-item-det">If the store says 16+, check with a parent. They might say yes later.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 3 — THE PUBLIC POST ════════════════════════════ -->
+<section class="sl" data-s="7">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 3</div><div class="sc-title">The Public Post</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">You just posted a "First Day" photo. It seems harmless… but look closer at the details.</div>
+    <!-- ★ SCENARIO IMAGE — Level 3 Social Media Post -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level3-socialpost.jpg" alt="Social media post showing school uniform and location details">
+    </div>
+    <div class="flags" data-lv="3">
+      <div class="flag" onclick="rf(this,3)"><div class="flag-ico">📍</div><div class="flag-type location">LOCATION</div><div class="flag-txt">Specific school name reveals exactly where you are.</div></div>
+      <div class="flag" onclick="rf(this,3)"><div class="flag-ico">🏷️</div><div class="flag-type identifier">IDENTIFIER</div><div class="flag-txt">School uniform &amp; badge creates a recognizable pattern.</div></div>
+      <div class="flag" onclick="rf(this,3)"><div class="flag-ico">🌍</div><div class="flag-type visibility">VISIBILITY</div><div class="flag-txt">"Public" means anyone in the world can see this.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="8">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 3</div><div class="sc-title">Make Your Move</div></div>
+  <div class="ch-body">
+    <h2>How would you share?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,8,0)">Share Publicly<small>🌍 Everyone can see</small></button>
+      <button class="cbtn" onclick="pick(this,8,1)">Close Friends Only<small>🔒 Share Privately</small></button>
+    </div>
+    <div class="fb" id="fb8"></div>
+    <p class="ch-tip">💡 Hide school names, logos, and exact locations before you post.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="9">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Review privacy settings together<span class="arr">▾</span></div><div class="g-item-det">Ensure social accounts are private, audiences limited to friends, and location tagging disabled.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Teach "Data Triangulation"<span class="arr">▾</span></div><div class="g-item-det">Explain how a school uniform + street sign + timestamp combine to reveal exact location.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Check the background<span class="arr">▾</span></div><div class="g-item-det">Before posting, zoom in to check for visible addresses, diplomas, or identifying landmarks.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Schools and regions often have strict photo and safeguarding rules. Publishing identifying information about minors without consent may violate privacy regulations.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Keep your school private<span class="arr">▾</span></div><div class="g-item-det">Never tag your school location or hangouts you visit every day.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Post later, not live<span class="arr">▾</span></div><div class="g-item-det">Wait until you've left a location before posting photos of it.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Crop out badges &amp; logos<span class="arr">▾</span></div><div class="g-item-det">Your uniform crest tells strangers exactly where to find you.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 4 — THE DATA ════════════════════════════ -->
+<section class="sl" data-s="10">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 4</div><div class="sc-title">The Data</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">A pop-up appears offering "Free Robux" for a limited time. It asks for personal details to claim your reward.</div>
+    <!-- ★ SCENARIO IMAGE — Level 4 Free Robux Scam -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level4-robux.jpg" alt="Fake Free Robux pop-up scam asking for personal details">
+    </div>
+    <div class="flags" data-lv="4">
+      <div class="flag" onclick="rf(this,4)"><div class="flag-ico">🎣</div><div class="flag-type lure">LURE</div><div class="flag-txt">"Free" rewards are often bait to steal data.</div></div>
+      <div class="flag" onclick="rf(this,4)"><div class="flag-ico">🚨</div><div class="flag-type danger">DANGER</div><div class="flag-txt">Real contests never ask for school or phone numbers.</div></div>
+      <div class="flag" onclick="rf(this,4)"><div class="flag-ico">⏰</div><div class="flag-type pressure">PRESSURE</div><div class="flag-txt">Countdowns force you to act without thinking.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="11">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 4</div><div class="sc-title">The Prize Trap</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,11,0)">Claim My Reward!<small>⏰ Expires Soon</small></button>
+      <button class="cbtn" onclick="pick(this,11,1)">Close Window<small>🛡️ Don't Risk It</small></button>
+    </div>
+    <div class="fb" id="fb11"></div>
+    <p class="ch-tip">💡 If it's free, your personal data is usually the price you pay.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="12">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Data is currency<span class="arr">▾</span></div><div class="g-item-det">Teach children that personal info (school, phone, email) has value and shouldn't be traded for "free" rewards.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Rehearse refusal scripts<span class="arr">▾</span></div><div class="g-item-det">Practice saying "No" to forms asking for unnecessary details. If a game asks for a phone number, the answer is "Why?" then "No."</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Use protective tools<span class="arr">▾</span></div><div class="g-item-det">Install ad-blockers and configure browser settings to limit tracking and block known scam sites.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Jurisdictions like the US (COPPA) or EU (GDPR-K) protect children's data. Collecting personal info from minors without verified parental consent is often illegal.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Real rewards aren't "free"<span class="arr">▾</span></div><div class="g-item-det">Legitimate contests won't ask for your school address or mom's phone number.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">You are the prize<span class="arr">▾</span></div><div class="g-item-det">If a website offers something huge for free, they're usually selling your data to strangers.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Close, don't fill<span class="arr">▾</span></div><div class="g-item-det">If a pop-up asks for info, close the whole window. Don't type anything — not even a fake name.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 5 — THE REQUEST ════════════════════════════ -->
+<section class="sl" data-s="13">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 5</div><div class="sc-title">The Request</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">A message came asking for a photo to "prove you're real." Look at the warning signs…</div>
+    <!-- ★ SCENARIO IMAGE — Level 5 WhatsApp Photo Request -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level5-request.jpg" alt="Unknown contact on WhatsApp asking to send a photo" style="max-width:340px;margin:0 auto;display:block">
+    </div>
+    <div class="flags" data-lv="5">
+      <div class="flag" onclick="rf(this,5)"><div class="flag-ico">👤</div><div class="flag-type unknown">UNKNOWN</div><div class="flag-txt">No profile photo or name.</div></div>
+      <div class="flag" onclick="rf(this,5)"><div class="flag-ico">📸</div><div class="flag-type demand">DEMAND</div><div class="flag-txt">Asking for pics is a red flag.</div></div>
+      <div class="flag" onclick="rf(this,5)"><div class="flag-ico">🎭</div><div class="flag-type trick">TRICK</div><div class="flag-txt">"Prove it" is manipulation.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="14">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 5</div><div class="sc-title">Make Your Move</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,14,0)">Send Quick Selfie<small>⚡ Instant Send</small></button>
+      <button class="cbtn" onclick="pick(this,14,1)">Talk to Parent First<small>🛡️ Stay Safe</small></button>
+    </div>
+    <div class="fb" id="fb14"></div>
+    <p class="ch-tip">💡 No real friend needs a photo to "prove" who you are.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="15">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Normalize saying "No"<span class="arr">▾</span></div><div class="g-item-det">Let your child know it's always okay to refuse sharing photos, even if someone pressures them.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Explain photo permanence<span class="arr">▾</span></div><div class="g-item-det">Once a photo is sent, you lose control. It can be saved, shared, or used in ways you never intended.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Create a safety phrase<span class="arr">▾</span></div><div class="g-item-det">Agree on a code word your child can use if they feel pressured online, so you can step in quickly.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Soliciting images from minors is a serious criminal offense in most jurisdictions. Keep evidence and report any such requests to authorities immediately.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Real friends don't demand photos<span class="arr">▾</span></div><div class="g-item-det">Anyone who needs a photo to "prove" who you are is probably not who they claim to be.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Block and report<span class="arr">▾</span></div><div class="g-item-det">If someone asks for photos, block them immediately and tell an adult you trust.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">You're never rude for saying No<span class="arr">▾</span></div><div class="g-item-det">Your safety is more important than being polite to a stranger on the internet.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 6 — THE GROUP ════════════════════════════ -->
+<section class="sl" data-s="16">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 6</div><div class="sc-title">The Group</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">A group chat starts sharing a manipulated photo of a classmate. Everyone is laughing. The pressure is on to join in…</div>
+    <!-- ★ SCENARIO IMAGE — Level 6 Group Chat Bullying -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level6-groupchat.jpg" alt="Group chat showing cyberbullying with manipulated photo">
+    </div>
+    <div class="flags" data-lv="6">
+      <div class="flag" onclick="rf(this,6)"><div class="flag-ico">📤</div><div class="flag-type impact">IMPACT</div><div class="flag-txt">Forwarding spreads the hurt further.</div></div>
+      <div class="flag" onclick="rf(this,6)"><div class="flag-ico">💔</div><div class="flag-type harm">HARM</div><div class="flag-txt">Manipulated images are a form of bullying.</div></div>
+      <div class="flag" onclick="rf(this,6)"><div class="flag-ico">😂</div><div class="flag-type pressure">PRESSURE</div><div class="flag-txt">Laughing emojis normalize cruelty.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="17">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 6</div><div class="sc-title">Make Your Move</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,17,0)">Forward &amp; Laugh<small>😂 Join the Fun</small></button>
+      <button class="cbtn" onclick="pick(this,17,1)">Report to Authorities<small>🛡️ Be an Upstander</small></button>
+    </div>
+    <div class="fb" id="fb17"></div>
+    <p class="ch-tip">💡 Be the hero who stops the chain. Sharing hurtful content makes you part of the problem.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="18">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Coach on Reporting Tools<span class="arr">▾</span></div><div class="g-item-det">Show your child exactly where the "Report" and "Block" buttons are in their favorite apps.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Capture Evidence<span class="arr">▾</span></div><div class="g-item-det">Teach them to screenshot harmful content immediately, before it gets deleted.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Escalate When Necessary<span class="arr">▾</span></div><div class="g-item-det">Don't hesitate to contact school administrators or platform safety teams if harassment persists.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Harassment, cyberstalking, non-consensual image sharing, and harmful deepfakes often violate school codes and may breach local criminal laws.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Don't Forward It<span class="arr">▾</span></div><div class="g-item-det">If you share a mean post, you become part of the problem. Be the one who breaks the chain.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Report &amp; Support<span class="arr">▾</span></div><div class="g-item-det">Use the report button. It's not "snitching" — it's protecting someone from being hurt.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Save Proof<span class="arr">▾</span></div><div class="g-item-det">Screenshot anything dangerous, then block the bully and tell an adult.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ LEVEL 7 — GAME SPENDING ════════════════════════════ -->
+<section class="sl" data-s="19">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 7</div><div class="sc-title">Game Spending</div></div>
+  <div class="sc-body">
+    <div class="sc-desc">A "Flash Sale" appears in the game store. A shiny Mystery Box promises rare items, but the timer is ticking down fast. What elements are trying to trick you?</div>
+    <!-- ★ SCENARIO IMAGE — Level 7 Flash Sale / Mystery Box -->
+    <div class="sc-img-wrap has-img">
+      <img src="images/level7-flashsale.jpg" alt="In-game flash sale with mystery box, countdown timer, and saved payment card">
+    </div>
+    <div class="flags" data-lv="7">
+      <div class="flag" onclick="rf(this,7)"><div class="flag-ico">⏱️</div><div class="flag-type pressure">PRESSURE</div><div class="flag-txt">"Flash Sale" timers create artificial panic.</div></div>
+      <div class="flag" onclick="rf(this,7)"><div class="flag-ico">🎰</div><div class="flag-type risk">RISK</div><div class="flag-txt">0.5% chance means you almost always lose.</div></div>
+      <div class="flag" onclick="rf(this,7)"><div class="flag-ico">💳</div><div class="flag-type trap">TRAP</div><div class="flag-txt">Saved cards make spending too easy.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="20">
+<div class="sc-card">
+  <div class="sc-head"><div class="lv-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Level 7</div><div class="sc-title">Make Your Move</div></div>
+  <div class="ch-body">
+    <h2>What would you do?</h2><p class="ch-sub">Choose the safest option</p>
+    <div class="choices">
+      <button class="cbtn" onclick="pick(this,20,0)">BUY NOW!<small>⏰ Limited Time Offer</small></button>
+      <button class="cbtn" onclick="pick(this,20,1)">Remove Saved Card<small>🛡️ Think First</small></button>
+    </div>
+    <div class="fb" id="fb20"></div>
+    <p class="ch-tip">💡 Countdowns and "saved cards" bypass your brain's pause button.</p>
+  </div>
+</div>
+</section>
+
+<section class="sl" data-s="21">
+<div class="par-grid">
+  <div class="par-panel">
+    <div class="par-head ph-parent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>For Parents</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Control the flow<span class="arr">▾</span></div><div class="g-item-det">Turn off in-app purchases by default or require password approval for every transaction.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Discuss the odds<span class="arr">▾</span></div><div class="g-item-det">Explain that "0.5% chance" means you'll likely lose 199 times before winning once.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Watch for "Sunk Cost"<span class="arr">▾</span></div><div class="g-item-det">Teach kids that spending more money won't fix a bad purchase or guarantee a win.</div></div>
+    </div>
+    <div class="law"><div class="law-t">⚖️ The Law</div><div class="law-p">Some regions regulate loot boxes as gambling and ban deceptive "dark patterns." Parental controls are a legal tool for valid consent over digital spending.</div></div>
+  </div>
+  <div class="par-panel">
+    <div class="par-head ph-kid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Think Before You Click</div>
+    <div class="g-list">
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">It's basically gambling<span class="arr">▾</span></div><div class="g-item-det">Mystery boxes are designed to take your money, not give you prizes.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Timers are tricks<span class="arr">▾</span></div><div class="g-item-det">Countdowns try to rush your brain so you don't think about the cost.</div></div>
+      <div class="g-item" onclick="tg(this)"><div class="g-item-title">Pause and ask<span class="arr">▾</span></div><div class="g-item-det">If a game asks for money, stop playing and ask a parent first.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ SLIDE 22 : COMPLETION ════════════════════════════ -->
+<section class="sl" data-s="22">
+<div class="comp">
+  <div class="trophy">🏆</div>
+  <h1>Mission Accomplished!</h1>
+  <p class="csub">You've leveled up your digital safety</p>
+  <div class="score-box">
+    <div class="sc-num" id="fScore">0<span>/7</span></div>
+    <div class="sc-det"><div class="sc-det-l">Your Score</div><div class="sc-det-s" id="fStatus">Keep Learning!</div></div>
+  </div>
+  <div class="badges" id="bGrid">
+    <div class="bdg"><div class="bdg-ico lost" id="b1">🏰</div><div class="bdg-lbl">Server Sensei</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b2">🎮</div><div class="bdg-lbl">Rating Reader</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b3">🔒</div><div class="bdg-lbl">Privacy Pro</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b4">🛡️</div><div class="bdg-lbl">Scam Shield</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b5">✋</div><div class="bdg-lbl">Boundary Boss</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b6">💪</div><div class="bdg-lbl">Upstander</div></div>
+    <div class="bdg"><div class="bdg-ico lost" id="b7">💰</div><div class="bdg-lbl">Money Master</div></div>
+  </div>
+  <div class="ach-row">
+    <div class="ach"><h3>✅ Parent Achievements</h3><p>You've practiced key skills: supervising invites, checking ratings, reviewing privacy settings, spotting scams, and setting spending limits.</p></div>
+    <div class="ach"><h3>⭐ Kid Achievements</h3><p>You learned to pause before clicking, protect your data, ask for help, and be a digital hero for friends.</p></div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════════════════════ SLIDE 23 : OUTRO ════════════════════════════ -->
+<section class="sl" data-s="23">
+<div class="outro">
+  <p class="quote">Digital safety is a <em>habit</em>,<br>not a rulebook.</p>
+  <div class="outro-logo"><img src="images/cybernym-logo.jpg" alt="Cybernym"></div>
+  <p class="msg">You've started the journey. Let's keep building safer digital futures together.</p>
+
+  <div class="outro-mission">
+    <div class="mission-badge">🛡️ An Initiative by Cybernym.io</div>
+    <p class="mission-lead">This awareness challenge is an initiative from <strong>Cybernym.io</strong> to help families stay safe online.</p>
+    <div class="mission-divider"></div>
+    <p class="mission-statement">The biggest cybersecurity gap isn't technology — <em>it's human instinct.</em></p>
+    <div class="mission-points">
+      <div class="mp"><span class="mp-ico">🏠</span><span>Families face it at home.</span></div>
+      <div class="mp"><span class="mp-ico">🏢</span><span>Organizations face it at scale.</span></div>
+      <div class="mp mp-highlight"><span class="mp-ico">🔒</span><span><strong>We close that gap</strong> by turning security from a rulebook into a habit.</span></div>
+    </div>
+  </div>
+
+  <div class="outro-cta">
+    <p class="outro-cta-text">Want to protect your family or your organization?</p>
+    <div class="outro-links">
+      <a href="https://cybernym.io" target="_blank" class="olink ol-p">🌐 Visit Cybernym.io</a>
+      <a href="mailto:info@cybernym.io" class="olink ol-s">✉️ info@cybernym.io</a>
+    </div>
+  </div>
+
+  <div class="outro-share">
+    <p class="share-text">Found this helpful? Share it with other families 💙</p>
+  </div>
+
+  <p class="copy">© 2026 Cybernym. All rights reserved. | <a href="https://cybernym.io" target="_blank" style="color:var(--acc);text-decoration:none">cybernym.io</a></p>
+</div>
+</section>
+
+</main>
+
+<!-- ═══ FOOTER NAV ═══ -->
+<footer class="foot">
+  <button class="nbtn nb-back" id="bBack" onclick="go(cur-1)" disabled>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Back
+  </button>
+  <span class="foot-count" id="fCount">1 / 24</span>
+  <button class="nbtn nb-next" id="bNext" onclick="go(cur+1)" disabled>
+    Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </button>
+</footer>
+
+</div>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT ENGINE
+═══════════════════════════════════════════ -->
+<script>
+(function(){
+  var T=24, cur=0, score=0, lvOk={}, fCnt={}, chDone={};
+  // Scenario slides -> level mapping
+  var scSlides={1:1,4:2,7:3,10:4,13:5,16:6,19:7};
+  // Choice slides
+  var chSlides=[2,5,8,11,14,17,20];
+  // Choice slide -> level
+  var chLv={2:1,5:2,8:3,11:4,14:5,17:6,20:7};
+
+  SCORM.init();
+  ui();
+
+  window.cur=cur;
+
+  function ui(){
+    var p=Math.round(cur/(T-1)*100);
+    document.getElementById('pFill').style.width=p+'%';
+    document.getElementById('pLbl').textContent=p+'%';
+    document.getElementById('scDisp').textContent=score+'/7';
+    document.getElementById('fCount').textContent=(cur+1)+' / '+T;
+    document.getElementById('bBack').disabled=(cur===0);
+    var nx=document.getElementById('bNext');
+    if(cur===0||cur===T-1){nx.disabled=true}
+    else if(cur in scSlides){nx.disabled=!((fCnt[scSlides[cur]]||0)>=3)}
+    else if(chSlides.indexOf(cur)>-1){nx.disabled=!chDone[cur]}
+    else{nx.disabled=false}
+    // Update button text on last content slide
+    if(cur===T-2){nx.innerHTML='Finish <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'}
+    else{nx.innerHTML='Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>'}
+    SCORM.bookmark(cur);
+  }
+
+  window.go=function(n){
+    if(n<0||n>=T)return;
+    document.querySelectorAll('.sl').forEach(function(s){s.classList.remove('on')});
+    cur=n; window.cur=n;
+    var t=document.querySelector('[data-s="'+n+'"]');
+    if(t)t.classList.add('on');
+    document.getElementById('main').scrollTop=0;
+    ui();
+    if(n===22)showComp();
+  };
+
+  // Reveal red flags
+  window.rf=function(el,lv){
+    if(el.classList.contains('show'))return;
+    el.classList.add('show');
+    fCnt[lv]=(fCnt[lv]||0)+1;
+    ui();
+  };
+
+  // Make a choice
+  window.pick=function(btn,si,ok){
+    if(chDone[si])return;
+    chDone[si]=true;
+    var btns=btn.parentElement.querySelectorAll('.cbtn');
+    btns.forEach(function(b){b.classList.add('off')});
+    if(ok){
+      btn.classList.add('right');
+      var lv=chLv[si];
+      if(lv&&!lvOk[lv]){lvOk[lv]=true;score++}
+    }else{
+      btn.classList.add('wrong');
+      btns.forEach(function(b){if(b!==btn)b.classList.add('right')});
+    }
+    var fb=document.getElementById('fb'+si);
+    if(fb){
+      fb.classList.add('on');
+      fb.className='fb on '+(ok?'fb-ok':'fb-no');
+      fb.innerHTML=ok
+        ?'<strong>✅ Great choice!</strong> You picked the safe option. Always pause and think before acting online.'
+        :'<strong>❌ Not quite.</strong> That option puts you at risk. The safer choice is to pause, check with a parent, or close the window.';
+    }
+    ui();
+  };
+
+  // Toggle guidance accordion
+  window.tg=function(el){el.classList.toggle('open')};
+
+  // Completion
+  function showComp(){
+    document.getElementById('fScore').innerHTML=score+'<span>/7</span>';
+    var pct=Math.round(score/7*100);
+    var st=document.getElementById('fStatus');
+    if(pct>=100){st.textContent='Perfect Score! 🌟';st.style.color='#27AE60'}
+    else if(pct>=70){st.textContent='Well Done! 🎉';st.style.color='#27AE60'}
+    else{st.textContent='Keep Learning! 📚';st.style.color='#F39C12'}
+    for(var i=1;i<=7;i++){
+      var b=document.getElementById('b'+i);
+      if(b){if(lvOk[i]){b.classList.remove('lost');b.classList.add('won')}}}
+    SCORM.complete(pct);
+  }
+
+  window.addEventListener('beforeunload',function(){SCORM.finish()});
+  window.addEventListener('unload',function(){SCORM.finish()});
+})();
+</script>
+
+</body>
+</html>
